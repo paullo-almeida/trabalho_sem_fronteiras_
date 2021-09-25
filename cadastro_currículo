@@ -1,0 +1,147 @@
+var express = require('express');
+var bodyParser = require('body-parser');
+var fs = require('fs');
+
+var app = express();
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+
+app.use(function(req, res, next) {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.setHeader("Access-Control-Allow-Headers", "content-type");
+  res.setHeader("Content-Type", "application/json");
+  res.setHeader("Access-Control-Allow-Credentials", true);
+  next();
+});
+
+app.listen(8082, function() { console.log('Servidor api-cadastro de curriculo rodando na porta 8082') });
+
+var myCVRepository = 'curriculo.json';
+
+// GET ALL
+app.get('/rest/curriculo', function(req, res) {
+  fs.readFile(myCVRepository, 'utf8', function(err, data) {
+    if (err) {
+      var response = { status: 'falha', resultado: err };
+      res.json(response);
+    } else {
+      var response = { status: 'sucesso', resultado: JSON.parse(data) };
+      res.json(response);
+    }
+  });
+});
+
+// GET filter cadastro de currículo
+app.get('/rest/curriculo/filter', function(req, res) {
+  fs.readFile(myCVRepository, 'utf8', function(err, data) {
+    if (err) {
+      var response = { status: 'falha', resultado: err };
+      res.json(response);
+    } else {
+      var obj = JSON.parse(data);
+      var result = 'Nenhum usuário foi encontrado';
+
+      obj.curriculo.forEach(function(curriculo) {
+        if (curriculo != null) {
+          console.log('curriculo: ', curriculo);
+          if (curriculo.curriculoId == req.query.curriculoId) {
+            result = curriculo;
+          }
+        }
+      });
+
+      var response = { status: 'sucesso', resultado: result };
+      res.json(response);
+    }
+  });
+});
+
+//POST cadastro de currículo
+app.post('/rest/curriculo', function(req, res) {
+  fs.readFile(myCVRepository, 'utf8', function(err, data) {
+    if (err) {
+      var response = { status: 'falha', resultado: err };
+      res.json(response);
+    } else {
+      var obj = JSON.parse(data);
+      req.body.curriculo = obj.curriculo.length + 1;
+
+      obj.curriculo.push(req.body);
+
+      fs.writeFile(myCVRepository, JSON.stringify(obj), function(err) {
+        if (err) {
+          var response = { status: 'falha', resultado: err };
+          res.json(response);
+        } else {
+          var response = { status: 'sucesso', resultado: 'Registro incluso com sucesso' };
+          res.json(response);
+        }
+      });
+    }
+  });
+});
+
+
+// PUT cadastro de currículo
+app.put('/rest/curriculo', function(req, res) {
+  fs.readFile(myCVRepository, 'utf8', function(err, data) {
+    if (err) {
+      var response = { status: 'falha', resultado: err };
+      res.json(response);
+    } else {
+      var obj = JSON.parse(data);
+
+      obj.curriculo[(req.body.curriculoId)].nome = req.body.nome;
+      obj.curriculo[(req.body.curriculoId)].email = req.body.email;
+      obj.curriculo[(req.body.curriculoId)].telefone = req.body.telefone;
+      obj.curriculo[(req.body.curriculoId)].endereço = req.body.endereço;
+      obj.curriculo[(req.body.curriculoId)].nacionalidade =
+        req.body.nacionalidade;
+      obj.curriculo[(req.body.curriculoId)].dataDeNascimento =
+        req.body.dataDeNascimento;
+      obj.curriculo[(req.body.curriculoId)].areaDeAtuacao =
+        req.body.areaDeAtuacao
+      obj.usuarios[(req.body.curriculoId)].formacao =
+        req.body.formacao;
+      obj.curriculo[(req.body.curriculoId)].idiomas =
+        req.body.idiomas;
+
+      fs.writeFile(myCVRepository, JSON.stringify(obj), function(err) {
+        if (err) {
+          var response = { status: 'falha', resultado: err };
+          res.json(response);
+        } else {
+          var response = { status: 'sucesso', resultado: 'Registro editado com sucesso' };
+          res.json(response);
+        }
+      });
+    }
+  });
+});
+
+
+//DELETE cadastro de curriculo
+app.delete('/rest/curriculo', function(req, res) {
+  fs.readFile(myCVRepository, 'utf8', function(err, data) {
+    if (err) {
+      var response = { status: 'falha', resultado: err };
+      res.json(response);
+    } else {
+      var obj = JSON.parse(data);
+
+      delete obj.curriculo[(req.body.curriculoId)];
+
+      fs.writeFile(myUserRepository, JSON.stringify(obj), function(err) {
+        if (err) {
+          var response = { status: 'falha', resultado: err };
+          res.json(response);
+        } else {
+          var response = { status: 'sucesso', resultado: 'Curriculo excluído com sucesso' };
+          res.json(response);
+        }
+      });
+    }
+  });
+});   
